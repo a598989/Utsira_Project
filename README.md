@@ -69,8 +69,8 @@ UTSIRA_PROJECT/
 │   └── kpi_summary.csv  
 │  
 ├── report/  
-│   └── ENP120_Utsira_Project_Group16.pdf  
-│  
+│   ├── ENP120_Utsira_Project_Group16.pdf  
+│   └── ENP120-Presentation.pptx (Initial idea)
 ├── main.py  
 ├── requirements.txt  
 └── README.md  
