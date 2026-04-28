@@ -1,48 +1,44 @@
-from API.base_api import BaseAPI
+import os
+import requests
 import pandas as pd
 
 
-class FrostAPI(BaseAPI):
-    """
-    Fetches meteorological data from MET Norway Frost API.
-    """
+class FrostAPI:
 
     BASE_URL = "https://frost.met.no/observations/v0.jsonld"
 
-    def __init__(self, client_id):
-        super().__init__()
-        self.client_id = client_id
+    def __init__(self):
+        self.client_id = os.getenv("FROST_CLIENT_ID")
 
-    def get_wind_speed(self,
-                       station="SN44560",   # Haugesund / near Utsira
-                       start="2023-01-01",
-                       end="2023-12-31"):
+        if not self.client_id:
+            raise ValueError("FROST_CLIENT_ID not found in environment")
 
+    # wind data
+    def get_wind_data(self, station_id, start, end):
         params = {
-            "sources": station,
+            "sources": station_id,
             "elements": "wind_speed",
-            "referencetime": f"{start}/{end}"
+            "referencetime": f"{start}/{end}",
         }
 
-        response = self.session.get(
+        response = requests.get(
             self.BASE_URL,
             params=params,
             auth=(self.client_id, "")
         )
-
         response.raise_for_status()
-        data = response.json()
+
+        data = response.json().get("data", [])
 
         records = []
+        for item in data:
+            time = item["referenceTime"]
+            value = item["observations"][0]["value"]
 
-        for item in data["data"]:
             records.append({
-                "time": item["referenceTime"],
-                "wind_speed": item["observations"][0]["value"]
+                "time": pd.to_datetime(time),
+                "wind_speed": value
             })
 
         df = pd.DataFrame(records)
-        df["time"] = pd.to_datetime(df["time"])
-        df = df.set_index("time")
-
-        return df
+        return df.set_index("time").sort_index()

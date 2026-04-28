@@ -3,10 +3,6 @@ import pandas as pd
 
 
 class BaseAPI:
-    """
-    Base class for all API integrations.
-    Handles HTTP requests and basic DataFrame conversion.
-    """
 
     def __init__(self):
         self.session = requests.Session()

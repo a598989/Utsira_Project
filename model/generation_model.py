@@ -1,34 +1,42 @@
-import numpy as np
+import pandas as pd
 
 
 class GenerationModel:
-    """
-    Converts weather data into power generation.
-    """
 
-    def wind_power(self, wind_speed, capacity_kw=5000):
-        """
-        More realistic wind turbine curve
-        """
+    def __init__(self, wind_capacity_kw=5000):
+        self.wind_capacity = wind_capacity_kw
 
-        cut_in = 3
-        rated = 12
-        cut_out = 25
+        # wind curve parameters
+        self.cut_in = 2
+        self.rated = 12
+        self.cut_out = 25
 
-        power = np.zeros_like(wind_speed)
+        # solar defaults
+        self.performance_ratio = 0.85
 
-        # ramp-up region
-        mask = (wind_speed >= cut_in) & (wind_speed <= rated)
-        power[mask] = ((wind_speed[mask] - cut_in) / (rated - cut_in))**3
+    # wind curve
+    def wind_power_curve(self, v):
+        if v < self.cut_in or v > self.cut_out:
+            return 0
 
-        # rated region
-        mask = (wind_speed > rated) & (wind_speed <= cut_out)
-        power[mask] = 1.0
+        if v < self.rated:
+            return self.wind_capacity * ((v - self.cut_in) / (self.rated - self.cut_in)) ** 3
 
-        return power * capacity_kw
+        return self.wind_capacity
 
-    def solar_power(self, radiation, capacity_kw=1000):
-        """
-        Convert W/m² → kW output
-        """
-        return (radiation / 1000) * capacity_kw
+    # wind generation
+    def compute_wind_generation(self, wind_df):
+        power = wind_df["wind_speed"].apply(self.wind_power_curve)
+        power.name = "wind_generation_kw"
+        return power
+
+    # solar model
+    def solar_power(self, radiation, capacity_kw):
+        power = (radiation / 1000) * capacity_kw * self.performance_ratio
+        return power.clip(lower=0, upper=capacity_kw)
+
+    # solar generation
+    def compute_solar_generation(self, solar_df, capacity_kw=1000):
+        power = self.solar_power(solar_df["radiation"], capacity_kw)
+        power.name = "solar_generation_kw"
+        return power

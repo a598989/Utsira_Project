@@ -18,8 +18,8 @@ __pycache__/
 # Output files (plots, CSVs, etc.)
 Outputs/
 
-# Data files 
-data/*.csv
+# Data files
+data/tmp/
 
 # Logs
 *.log
